@@ -4,6 +4,16 @@ import numpy as np
 START_POINT = (0, 0)
 END_POINT = (150, 150)
 
+vid_width = 0
+vid_height = 0
+
+RECTANGLE_COLOR = (255, 0, 0)
+FONT_COLOR = (124, 252, 0)
+FONT_SCALE = 1
+THICKNESS = 1
+LINE_TYPE = 2
+TEXT_LEFT_BOTTOM_CORNER = (0, 0)
+
 COMMAND_KEYS = {
     2490368: (0, -10),  # UpKey
     2621440: (0, 10),  # DownKey
@@ -22,27 +32,42 @@ COLOR_SCHEME = {
 def process(img):
     image = img[START_POINT[1]:END_POINT[1], START_POINT[0]:END_POINT[0]].copy()
     hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-    cv.rectangle(img, START_POINT, END_POINT, (255, 0, 0), 2, 8)
+    # cv.rectangle(img, START_POINT, END_POINT, (255, 0, 0), LINE_TYPE, THICKNESS*8)
 
-    dom_color = None
-    max = 0
+    color_name = "Not found"
+    max_mask_size = 0
 
-    for name, (lower, upper) in COLOR_SCHEME.items():
+    # Сравниваем размер маски для каждого цвета
+    for cur_name, (lower, upper) in COLOR_SCHEME.items():
         mask = cv.inRange(hsv, lower, upper)
-        # output = cv.bitwise_and(image, image, mask=mask)
-        # cv.imshow("images", np.hstack([image, output]))
 
         mask_size = cv.countNonZero(mask)
-        if mask_size > max:
-            max = mask_size
-            dom_color = name
+        if mask_size > max_mask_size:
+            max_mask_size = mask_size
+            color_name = cur_name
 
-    print(dom_color)
+    # Область в которой мы определяем цвет
+    cv.rectangle(img, START_POINT, END_POINT, RECTANGLE_COLOR, LINE_TYPE, THICKNESS*8)
+
+    # Отображение названия цвета
+    cv.rectangle(img, (vid_width-160, vid_height-50), (vid_width, vid_height), (0, 0, 0), -1)
+    cv.putText(img, color_name,
+               TEXT_LEFT_BOTTOM_CORNER,
+               cv.FONT_HERSHEY_SIMPLEX,
+               FONT_SCALE,
+               FONT_COLOR,
+               THICKNESS,
+               LINE_TYPE)
 
     return img
 
 capture = cv.VideoCapture("C:/Users/whr1t/Desktop/Repos/CV/videoplayback.mp4")
 # capture = cv.VideoCapture(0)
+
+vid_width = int(capture.get(cv.CAP_PROP_FRAME_WIDTH))
+vid_height = int(capture.get(cv.CAP_PROP_FRAME_HEIGHT))
+
+TEXT_LEFT_BOTTOM_CORNER = (vid_width - 160, vid_height - 10)
 
 while True:
     ret, frame = capture.read()
